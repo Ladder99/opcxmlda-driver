@@ -7,8 +7,6 @@ machines:
     sweep_ms: !!int 1000
     net_uri: http://opcxml.demo-this.com/XmlDaSampleServer/Service.asmx
     net_timeout_s: !!int 3
-    shdr_port: !!int 7878
-    shdr_verbose: !!bool true
     data:
       - Dynamic/Analog Types/Double:
           shdr:
