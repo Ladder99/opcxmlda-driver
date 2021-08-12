@@ -23,9 +23,10 @@ namespace l99.driver.opcxmlda.handlers
                 host = veneers.Machine.Id,
                 fields = new
                 {
-                    _value = veneer.LastArrivedValue.value,
                     metric_name = veneer.LastArrivedValue.name,
-                    metric_type = veneer.LastArrivedValue.type
+                    _value = veneer.LastArrivedValue.value,
+                    type = veneer.LastArrivedValue.type,
+                    good = veneer.LastArrivedValue.good
                 }
             };
                 
@@ -42,20 +43,14 @@ namespace l99.driver.opcxmlda.handlers
             if (onChange == null)
                 return;
             
-            var topic = $"opcdaxml/{veneers.Machine.Id}/splunk/{veneer.Name}";
+            var topic = $"opcxmlda/{veneers.Machine.Id}/splunk/{veneer.Name}";
             string payload = JObject.FromObject(onChange).ToString();
             await veneers.Machine.Broker.PublishChangeAsync(topic, payload);
         }
         
         protected override async Task afterDataErrorAsync(Veneers veneers, Veneer veneer, dynamic? onError)
         {
-            /*
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(new
-            {
-                method = veneer.LastArrivedInput.method, rc = veneer.LastArrivedInput.rc
-            });
-            */
+            
         }
     }
 }

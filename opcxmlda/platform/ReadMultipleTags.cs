@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using OpcLabs.EasyOpc;
 using OpcLabs.EasyOpc.DataAccess;
@@ -10,21 +11,23 @@ namespace l99.driver.opcxmlda
 {
     public partial class Platform
     {
-        public async Task<dynamic> ReadMultipleTagsAsync(List<object> descriptors)
+        public async Task<dynamic> ReadMultipleTagsAsync(List<dynamic> descriptors)
         {
             return await Task.FromResult(ReadMultipleTags(descriptors));
         }
         
-        public dynamic ReadMultipleTags(List<object> descriptors)
+        public dynamic ReadMultipleTags(List<dynamic> descriptors)
         {
             DAVtqResult[] results = null;
             
             NativeDispatchReturn ndr = nativeDispatch(() =>
             {
-                results = _machine.Client.ReadMultipleItems(
+                 results = _machine.Client.ReadMultipleItems(
                     new ServerDescriptor { UrlString = _machine.OpcxmldaEndpoint.URI },
                     Array.ConvertAll(descriptors.ToArray(),
-                        new Converter<object, DAItemDescriptor>(item => new DAItemDescriptor((string)item))));
+                        new Converter<dynamic, DAItemDescriptor>(item =>
+                            new DAItemDescriptor( (string)((Dictionary<object, object>.KeyCollection)item.Keys) .ElementAt(0))
+                        )));
                 
                 return true;
             });

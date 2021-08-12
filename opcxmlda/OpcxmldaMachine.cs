@@ -49,6 +49,7 @@ namespace l99.driver.opcxmlda
             dynamic cfg = (dynamic) config;
             _opcxmldaEndpoint = new OpcxmldaEndpoint(cfg.uri, (short)cfg.timeout);
             _client = new EasyDAClient();
+            this["cfg"] = cfg;
             this["data"] = cfg.data;
             this["platform"] = new Platform(this);
         }

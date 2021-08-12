@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using l99.driver.@base;
-using Newtonsoft.Json.Linq;
 
 namespace l99.driver.opcxmlda.veneers
 {
@@ -12,24 +11,24 @@ namespace l99.driver.opcxmlda.veneers
             {
                 name = string.Empty,
                 type = string.Empty,
-                value = string.Empty
+                value = string.Empty,
+                good = false
             };
         }
         
         protected override async Task<dynamic> AnyAsync(dynamic input, params dynamic?[] additionalInputs)
         {
-            string[] tag_descriptor_name_type = additionalInputs[0].Split(' ');
-
             var current_value = new
             {
-                name = tag_descriptor_name_type[0],
-                type = tag_descriptor_name_type.Length > 1 ? tag_descriptor_name_type[1] : string.Empty,
-                value = input.Vtq?.Value
+                name = additionalInputs[0],
+                type = input.Vtq?.ValueType.Name,
+                value = input.Vtq?.Value,
+                good = input.Vtq?.Quality.IsGood
             };
             
             await onDataArrivedAsync(input, current_value);
             
-            if (!JObject.FromObject(current_value).ToString().Equals(JObject.FromObject(lastChangedValue).ToString()))
+            if (current_value.IsDifferentString((object)lastChangedValue))
             {
                 await onDataChangedAsync(input, current_value);
             }

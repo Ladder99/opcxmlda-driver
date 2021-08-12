@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 using l99.driver.@base;
+
 
 namespace l99.driver.opcxmlda.collectors
 {
@@ -10,17 +13,17 @@ namespace l99.driver.opcxmlda.collectors
         {
             
         }
-        
+
         public override async Task<dynamic?> InitializeAsync()
         {
             try
             {
-                int counter = 0;
-                foreach (string descriptor in machine["data"])
+                foreach (dynamic descriptor in machine["data"])
                 {
-                    machine.ApplyVeneer(typeof(opcxmlda.veneers.Tag), 
-                        $"{descriptor.Split(' ')[0]}__{counter}");
-                    counter++;
+                    //machine.ApplyVeneer(typeof(opcxmlda.veneers.Tag), descriptor);
+                    
+                    var name = (string)((Dictionary<object, object>.KeyCollection)descriptor.Keys).ElementAt(0);
+                    machine.ApplyVeneer(typeof(opcxmlda.veneers.Tag), name);
                 }
                 
                 machine.VeneersApplied = true;
@@ -41,9 +44,11 @@ namespace l99.driver.opcxmlda.collectors
 
                 for (int i = 0; i < tags.response.read_multiple_tags.results.Length; i++)
                 {
-                    var descriptor = machine["data"][i];
+                    //string descriptor = machine["data"][i];
+                    
+                    string descriptor = (string)((Dictionary<object, object>.KeyCollection)machine["data"][i].Keys).ElementAt(0);
                     var tag = tags.response.read_multiple_tags.results[i];
-                    await machine.PeelVeneerAsync($"{descriptor.Split(' ')[0]}__{i}", tag, descriptor);
+                    await machine.PeelVeneerAsync(descriptor, tag, descriptor);
                 }
                 
                 LastSuccess = true;

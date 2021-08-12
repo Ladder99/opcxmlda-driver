@@ -73,7 +73,7 @@ namespace l99.driver.opcxmlda
 
             foreach (dynamic machine_conf in config["machines"])
             {
-                var built_config = new
+                var prebuilt_config = new
                 {
                     machine = new {
                         enabled = machine_conf.ContainsKey("enabled") ? machine_conf["enabled"] : false,
@@ -81,11 +81,13 @@ namespace l99.driver.opcxmlda
                         id = machine_conf.ContainsKey("id") ? machine_conf["id"] : Guid.NewGuid().ToString(),
                         uri = machine_conf.ContainsKey("net_uri") ? machine_conf["net_uri"] : "http://opcxml.demo-this.com/XmlDaSampleServer/Service.asmx",
                         timeout = machine_conf.ContainsKey("net_timeout_s") ? machine_conf["net_timeout_s"] : 2,
-                        data = machine_conf.ContainsKey("data") ? machine_conf["data"] : new List<object>(),
+                        data = machine_conf.ContainsKey("data") ? machine_conf["data"] : new List<dynamic>(),
                         collector = machine_conf.ContainsKey("strategy_type") ? machine_conf["strategy_type"] : "l99.driver.opcxmlda.collectors.Basic01, opcxmlda",
                         collector_lua = string.Empty,
-                        collector_sweep_ms = machine_conf.ContainsKey("sweepMs") ? machine_conf["sweepMs"] : 2000,
+                        collector_sweep_ms = machine_conf.ContainsKey("sweep_ms") ? machine_conf["sweep_ms"] : 2000,
                         handler = machine_conf.ContainsKey("handler_type") ? machine_conf["handler_type"] : "l99.driver.opcxmlda.handlers.Native, opcxmlda",
+                        shdr_port = machine_conf.ContainsKey("shdr_port") ? machine_conf["shdr_port"] : 7878,
+                        shdr_verbose = machine_conf.ContainsKey("shdr_verbose") ? machine_conf["shdr_verbose"] : false,
                     },
                     broker = new
                     {
@@ -100,7 +102,16 @@ namespace l99.driver.opcxmlda
                         auto_connect = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("enabled")) ? machine_conf["broker"]["auto_connect"] : false
                     }
                 };
-                
+
+                var built_config = new
+                {
+                    prebuilt_config.machine,
+                    prebuilt_config.broker,
+                    handler = machine_conf.ContainsKey(prebuilt_config.machine.handler)
+                        ? machine_conf[prebuilt_config.machine.handler]
+                        : null
+                };
+
                 _logger.Trace($"Machine configuration built:\n{JObject.FromObject(built_config).ToString()}");
                 
                 machine_confs.Add(built_config);
@@ -116,7 +127,7 @@ namespace l99.driver.opcxmlda
                 Broker broker = await brokers.AddAsync(cfg.machine, cfg.broker);
                 Machine machine = machines.Add(cfg.machine, broker);
                 machine.AddCollector(Type.GetType(cfg.machine.collector), cfg.machine.collector_sweep_ms, cfg.machine.collector_lua);
-                await machine.AddHandlerAsync(Type.GetType(cfg.machine.handler));
+                await machine.AddHandlerAsync(Type.GetType(cfg.machine.handler), cfg.handler);
             }
 
             return machines;
