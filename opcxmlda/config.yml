@@ -1,0 +1,25 @@
+machines:
+  - id: demo
+    enabled: !!bool true
+    type: l99.driver.opcxmlda.OpcxmldaMachine, opcxmlda
+    strategy_type: l99.driver.opcxmlda.collectors.Basic01, opcxmlda
+    handler_type: l99.driver.opcxmlda.handlers.SplunkMetric, opcxmlda
+    sweep_ms: !!int 1000
+    net_uri: http://opcxml.demo-this.com/XmlDaSampleServer/Service.asmx
+    net_timeout_s: !!int 3
+    data:
+      - Dynamic/Analog Types/Double
+      - Dynamic/Analog Types/Double[]
+      - Dynamic/Analog Types/Int
+      - SomeUnknownItem
+    broker:
+      enabled: !!bool true
+      net_ip: 10.20.30.102
+      net_port: !!int 1883
+      auto_connect: !!bool true
+      publish_status: !!bool true
+      publish_arrivals: !!bool true
+      publish_changes: !!bool true
+      publish_disco: !!bool true
+      disco_base_topic: opcxmlda
+  
