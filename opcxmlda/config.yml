@@ -12,6 +12,7 @@ machines:
           shdr:
             name: analog_double
             category: sample
+            eval: return current_value .. 1;
       - Dynamic/Analog Types/Int:
           shdr:
             name: analog_int

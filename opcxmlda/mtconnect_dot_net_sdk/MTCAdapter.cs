@@ -158,6 +158,20 @@ namespace MTConnect
             mDataItems.Add(aDI);
         }
 
+        public object GetDataItemValue(string name)
+        {
+            try
+            {
+                return (from DataItem di in mDataItems
+                    where di.Name.Equals(name)
+                    select di).First().Value;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+        
         public void UpdateDataItem(string name, object value)
         {
             try
