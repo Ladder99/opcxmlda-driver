@@ -11,9 +11,13 @@ Perfect for pulling data from Simotion drives running on Simatic Step 7 before O
 
 Handler `l99.driver.opcxmlda.handlers.SHDR, opcxmlda` outputs data in SHDR format to an MQTT broker and also is available at the TCP port defined in configuration (default: 7878).
 
+![SHDR TCP](docs/shdr_tcp.gif)
+
 ### Splunk Metric
 
 Handler `l99.driver.opcxmlda.handlers.SplunkMetric, opcxmlda` outputs data in Splunk metric format to an MQTT broker.
+
+![SHDR MQTT](docs/shdr_mqtt.gif)
 
 ## Configuration
 
