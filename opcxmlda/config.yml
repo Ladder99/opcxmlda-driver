@@ -12,16 +12,32 @@ machines:
           shdr:
             name: analog_double
             category: sample
-            eval: return current_value .. 1;
+            eval: |
+              --print(JObject.FromObject(dataitems):ToString());
+              
+              if current_value == 'UNAVAILABLE' then
+                print(name .. ' is available')
+                return new_value
+              else
+                print(name .. ' = ' .. current_value .. ' + ' .. new_value)
+                return current_value + new_value
+              end
       - Dynamic/Analog Types/Int:
           shdr:
             name: analog_int
             category: sample
+            eval: |
+              print('analog_int value: ' .. dataitems["analog_int"].Value);
+              return new_value;
       - Dynamic/Analog Types/Double[]:
       - Static/Simple Types/String:
           shdr:
             name: simple_string
-            category: event
+            category: message
+            eval: |
+              random_code = math.random(100,999);
+              dataitem.Code = tostring(random_code);
+              return new_value;
       - Static/Simple Types/DateTime:
           shdr:
             name: simple_datetime
@@ -43,5 +59,7 @@ machines:
     l99.driver.opcxmlda.handlers.SHDR, opcxmlda:
       port: !!int 7878
       verbose: !!bool true
-    
-  
+      lua_head: |
+        luanet.load_assembly 'System';
+        luanet.load_assembly 'Newtonsoft.Json';
+        JObject = luanet.import_type 'Newtonsoft.Json.Linq.JObject';

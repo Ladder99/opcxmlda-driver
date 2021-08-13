@@ -15,14 +15,18 @@ namespace l99.driver.opcxmlda.handlers
         private Lua _luaState;
 
         private string _luaModuleTemplate =
-            @"luanet.load_assembly 'System'
+@"
+{0}
 
-            user =  {}";
+user =  {{}}
+";
         
         private string _luaFunctionTemplate =
-            @"function user:{0}(this, name, current_value, new_value, dataitems)
-                {1}
-            end";
+@"
+function user:{0}(this, name, current_value, new_value, dataitem, dataitems)
+    {1}
+end
+";
 
         private LuaTable _luaTable;
         private Dictionary<string, LuaFunction> _luaFunctions;
@@ -42,7 +46,7 @@ namespace l99.driver.opcxmlda.handlers
 
             Dictionary<string, string> temp_functions = new Dictionary<string, string>();
             StringBuilder temp_sb = new StringBuilder();
-            temp_sb.Append(_luaModuleTemplate);
+            temp_sb.AppendFormat(_luaModuleTemplate, config["lua_head"]);
             temp_sb.AppendLine();
             
             _adapter.AddDataItem(new Event("avail"));
@@ -78,6 +82,10 @@ namespace l99.driver.opcxmlda.handlers
                     
                     case "event":
                         _adapter.AddDataItem(new Event(di_name));
+                        break;
+                    
+                    case "message":
+                        _adapter.AddDataItem(new Message(di_name));
                         break;
                     
                     case "condition":
@@ -128,8 +136,16 @@ namespace l99.driver.opcxmlda.handlers
                     
                     if (_luaFunctions.ContainsKey(di_name))
                     {
-                        var temp_value = _luaFunctions[di_name] .Call(null, _luaTable, di_name, _adapter.GetDataItemValue(di_name), new_value);
-                        new_value = temp_value[0];
+                        object[] temp_value = _luaFunctions[di_name] 
+                            .Call(null, 
+                                _luaTable, 
+                                di_name, 
+                                _adapter.GetDataItemValue(di_name), 
+                                new_value, 
+                                _adapter.GetDataItem(di_name),
+                                _adapter.DataItemsDictionary);
+                        
+                        new_value = temp_value.Length > 0 ? temp_value[0] : "UNAVAILABLE";
                     }
                     
                     _adapter.UpdateDataItem(di_name, new_value);

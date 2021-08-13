@@ -68,6 +68,14 @@ namespace MTConnect
         /// </summary>
         private ArrayList mDataItems = new ArrayList();
 
+        public Dictionary<string, DataItem> DataItemsDictionary
+        {
+            get
+            {
+                return mDataItems.Cast<DataItem>().ToDictionary(v => v.Name, v => v);
+            }
+        }
+        
         /// <summary>
         /// The heartbeat interval.
         /// </summary>
@@ -165,6 +173,20 @@ namespace MTConnect
                 return (from DataItem di in mDataItems
                     where di.Name.Equals(name)
                     select di).First().Value;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public DataItem GetDataItem(string name)
+        {
+            try
+            {
+                return (from DataItem di in mDataItems
+                    where di.Name.Equals(name)
+                    select di).First();
             }
             catch
             {
