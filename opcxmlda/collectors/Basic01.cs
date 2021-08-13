@@ -14,6 +14,16 @@ namespace l99.driver.opcxmlda.collectors
             
         }
 
+        private string getDataKey(int index)
+        {
+            return (string)((Dictionary<object, object>.KeyCollection)machine["data"][index].Keys).ElementAt(0);
+        }
+        
+        private string getDataKey(dynamic descriptor)
+        {
+            return (string)((Dictionary<object, object>.KeyCollection)descriptor.Keys).ElementAt(0);
+        }
+        
         public override async Task<dynamic?> InitializeAsync()
         {
             try
@@ -21,9 +31,7 @@ namespace l99.driver.opcxmlda.collectors
                 foreach (dynamic descriptor in machine["data"])
                 {
                     //machine.ApplyVeneer(typeof(opcxmlda.veneers.Tag), descriptor);
-                    
-                    var name = (string)((Dictionary<object, object>.KeyCollection)descriptor.Keys).ElementAt(0);
-                    machine.ApplyVeneer(typeof(opcxmlda.veneers.Tag), name);
+                    machine.ApplyVeneer(typeof(opcxmlda.veneers.Tag), getDataKey(descriptor));
                 }
                 
                 machine.VeneersApplied = true;
@@ -45,9 +53,8 @@ namespace l99.driver.opcxmlda.collectors
                 for (int i = 0; i < tags.response.read_multiple_tags.results.Length; i++)
                 {
                     //string descriptor = machine["data"][i];
-                    
-                    string descriptor = (string)((Dictionary<object, object>.KeyCollection)machine["data"][i].Keys).ElementAt(0);
                     var tag = tags.response.read_multiple_tags.results[i];
+                    string descriptor = getDataKey(i);
                     await machine.PeelVeneerAsync(descriptor, tag, descriptor);
                 }
                 

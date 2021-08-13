@@ -10,9 +10,14 @@ namespace l99.driver.opcxmlda.handlers
 {
     public class SHDR: Handler
     {
+        private dynamic _handlerConfig;
+        
         private MTConnect.Adapter _adapter;
         
         private Lua _luaState;
+        private LuaTable _luaTable;
+        private Dictionary<string, LuaFunction> _luaFunctions;
+        private Dictionary<string, string> _tempFunctions;
 
         private string _luaModuleTemplate =
 @"
@@ -28,73 +33,111 @@ function user:{0}(this, name, current_value, new_value, dataitem, dataitems)
 end
 ";
 
-        private LuaTable _luaTable;
-        private Dictionary<string, LuaFunction> _luaFunctions;
-
         public SHDR(Machine machine) : base(machine)
         {
             
         }
 
+        private void addDataItem(string category, string name)
+        {
+            switch (category.ToLower())
+            {
+                case "sample":
+                    _adapter.AddDataItem(new Sample(name));
+                    break;
+                    
+                case "event":
+                    _adapter.AddDataItem(new Event(name));
+                    break;
+                    
+                case "message":
+                    _adapter.AddDataItem(new Message(name));
+                    break;
+                    
+                case "condition":
+                    _adapter.AddDataItem(new Condition(name, true));
+                    break;
+            }
+        }
+
+        private string getShdrEvalText(Dictionary<object, object> shdr)
+        {
+            if (shdr.ContainsKey("eval"))
+                return string.Format(_luaFunctionTemplate, (string)shdr["name"], (string)shdr["eval"]);
+
+            return null;
+        }
+
+        private bool hasShdrSection(Dictionary<object,object> descriptor)
+        {
+            string descriptor_id = (string)descriptor.Keys.ElementAt(0);
+            
+            if (descriptor[descriptor_id]==null)
+                return false;
+                
+            if (!((Dictionary<object, object>)descriptor[descriptor_id]).ContainsKey("shdr"))
+                return false;
+
+            return true;
+        }
+
+        private string getShdrSectionName(Dictionary<object, object> descriptor)
+        {
+            if (!hasShdrSection(descriptor))
+                return null;
+            
+            string descriptor_id = (string)descriptor.Keys.ElementAt(0);
+
+            if (!((Dictionary<object, object>)((Dictionary<object, object>)descriptor[descriptor_id])["shdr"]).ContainsKey("name"))
+                return null;
+            
+            return (string)((Dictionary<object, object>)((Dictionary<object, object>)descriptor[descriptor_id])["shdr"])["name"];
+        }
+
+        public Dictionary<object, object> getShdrSection(Dictionary<object,object> descriptor)
+        {
+            string descriptor_id = (string)descriptor.Keys.ElementAt(0);
+            return ((Dictionary<object, object>)((Dictionary<object, object>)descriptor[descriptor_id])["shdr"]);
+        }
+
+        public void addDataItems(dynamic section)
+        {
+            foreach (Dictionary<object,object> descriptor in section)
+            {
+                if (!hasShdrSection(descriptor))
+                    continue;
+
+                var shdr = getShdrSection(descriptor);
+
+                var eval_text = getShdrEvalText(shdr);
+                if(!string.IsNullOrEmpty(eval_text))
+                    _tempFunctions.Add((string)shdr["name"], eval_text);
+                
+                addDataItem((string)shdr["category"], (string)shdr["name"]);
+            }
+        }
+        
         public override async Task InitializeAsync(dynamic config)
         {
+            _handlerConfig = config;
             _adapter = new Adapter(config["port"], config["verbose"]);
 
+            _tempFunctions = new Dictionary<string, string>();
             _luaFunctions = new Dictionary<string, LuaFunction>();
             _luaState = new Lua();
             _luaState.LoadCLRPackage();
 
-            Dictionary<string, string> temp_functions = new Dictionary<string, string>();
             StringBuilder temp_sb = new StringBuilder();
             temp_sb.AppendFormat(_luaModuleTemplate, config["lua_head"]);
             temp_sb.AppendLine();
+
+            if(config.ContainsKey("data"))
+                addDataItems(config["data"]);
             
-            _adapter.AddDataItem(new Event("avail"));
-            _adapter.UpdateDataItem("avail", "AVAILABLE");
+            if(machine["data"]!=null)
+                addDataItems(machine["data"]);
             
-            foreach (Dictionary<object,object> descriptor in machine["data"])
-            {
-                string descriptor_id = (string)descriptor.Keys.ElementAt(0);
-
-                if (descriptor[descriptor_id]==null)
-                    continue;
-                
-                if (!((Dictionary<object, object>)descriptor[descriptor_id]).ContainsKey("shdr"))
-                    continue;
-                
-                var shdr = ((Dictionary<object, object>)((Dictionary<object, object>)descriptor[descriptor_id])["shdr"]);
-
-                var di_name = (string)shdr["name"];
-                var di_cat = (string)shdr["category"];
-                
-                if (shdr.ContainsKey("eval"))
-                {
-                    var di_eval = (string)shdr["eval"];
-                    string function_text = string.Format(_luaFunctionTemplate, di_name, di_eval);
-                    temp_functions.Add(di_name, function_text);
-                }
-
-                switch (di_cat)
-                {
-                    case "sample":
-                        _adapter.AddDataItem(new Sample(di_name));
-                        break;
-                    
-                    case "event":
-                        _adapter.AddDataItem(new Event(di_name));
-                        break;
-                    
-                    case "message":
-                        _adapter.AddDataItem(new Message(di_name));
-                        break;
-                    
-                    case "condition":
-                        _adapter.AddDataItem(new Condition(di_name, true));
-                        break;
-                }
-            }
-
-            foreach (var kv in temp_functions)
+            foreach (var kv in _tempFunctions)
             {
                 temp_sb.AppendLine(kv.Value);
                 temp_sb.AppendLine();
@@ -103,7 +146,7 @@ end
             _luaState.DoString(temp_sb.ToString());
             _luaTable = _luaState["user"] as LuaTable;
             
-            foreach (var kv in temp_functions)
+            foreach (var kv in _tempFunctions)
             {
                 var function = _luaTable?[kv.Key] as LuaFunction;
                 _luaFunctions.Add(kv.Key, function);
@@ -112,25 +155,17 @@ end
             _adapter.Start();
         }
 
-        public override async Task<dynamic?> OnDataChangeAsync(Veneers veneers, Veneer veneer, dynamic? beforeChange)
+        private bool processIncomingData(Veneer veneer, dynamic section)
         {
-            _adapter.Begin();
-
-            foreach (Dictionary<object, object> descriptor in machine["data"])
+            foreach (Dictionary<object, object> descriptor in section)
             {
                 string descriptor_id = (string)descriptor.Keys.ElementAt(0);
                 if (descriptor_id.Equals(veneer.Name))
                 {
-                    if (descriptor[descriptor_id]==null)
+                    var di_name = getShdrSectionName(descriptor);
+
+                    if (string.IsNullOrEmpty(di_name))
                         continue;
-                
-                    if (!((Dictionary<object, object>)descriptor[descriptor_id]).ContainsKey("shdr"))
-                        continue;
-                    
-                    if (!((Dictionary<object, object>)((Dictionary<object, object>)descriptor[descriptor_id])["shdr"]).ContainsKey("name"))
-                        continue;
-                    
-                    var di_name = (string)((Dictionary<object, object>)((Dictionary<object, object>)descriptor[descriptor_id])["shdr"])["name"];
 
                     var new_value = veneer.LastArrivedValue.value;
                     
@@ -150,10 +185,25 @@ end
                     
                     _adapter.UpdateDataItem(di_name, new_value);
                     
-                    break;
+                    return true;
                 }
             }
 
+            return false;
+        }
+
+        public override async Task<dynamic?> OnDataChangeAsync(Veneers veneers, Veneer veneer, dynamic? beforeChange)
+        {
+            _adapter.Begin();
+
+            bool processed = false;
+            
+            if(_handlerConfig.ContainsKey("data"))
+                processed = processIncomingData(veneer, _handlerConfig["data"]);
+            
+            if(!processed && machine["data"]!=null)
+                processIncomingData(veneer, machine["data"]);
+            
             return null;
         }
         

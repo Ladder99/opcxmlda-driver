@@ -63,3 +63,10 @@ machines:
         luanet.load_assembly 'System';
         luanet.load_assembly 'Newtonsoft.Json';
         JObject = luanet.import_type 'Newtonsoft.Json.Linq.JObject';
+      data:
+        - avail:
+            shdr:
+              name: avail
+              category: event
+              eval: |
+                return "AVAILABLE";
