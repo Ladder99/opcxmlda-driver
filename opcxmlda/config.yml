@@ -3,7 +3,7 @@ machines:
     enabled: !!bool true
     type: l99.driver.opcxmlda.OpcxmldaMachine, opcxmlda
     strategy_type: l99.driver.opcxmlda.collectors.Basic01, opcxmlda
-    handler_type: l99.driver.opcxmlda.handlers.SHDR, opcxmlda
+    handler_type: l99.driver.opcxmlda.handlers.SplunkMetric, opcxmlda
     sweep_ms: !!int 1000
     net_uri: http://opcxml.demo-this.com/XmlDaSampleServer/Service.asmx
     net_timeout_s: !!int 3
