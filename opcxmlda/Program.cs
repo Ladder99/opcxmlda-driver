@@ -99,7 +99,10 @@ namespace l99.driver.opcxmlda
                         disco_base_topic = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("disco_base_topic")) ? machine_conf["broker"]["disco_base_topic"] : "fanuc",
                         ip = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("net_ip")) ? machine_conf["broker"]["net_ip"] : "127.0.0.1", 
                         port = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("net_port")) ? machine_conf["broker"]["net_port"] : 1883,
-                        auto_connect = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("enabled")) ? machine_conf["broker"]["auto_connect"] : false
+                        auto_connect = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("enabled")) ? machine_conf["broker"]["auto_connect"] : false,
+                        anonymous = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("anonymous")) ? machine_conf["broker"]["anonymous"] : true,
+                        user = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("user")) ? machine_conf["broker"]["user"] : "user",
+                        password = (machine_conf.ContainsKey("broker") && machine_conf["broker"].ContainsKey("password")) ? machine_conf["broker"]["password"] : "password"
                     }
                 };
 
