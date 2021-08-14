@@ -9,7 +9,7 @@ namespace l99.driver.opcxmlda.collectors
 {
     public class Basic01 : Collector
     {
-        public Basic01(Machine machine, int sweepMs = 1000, params dynamic[] additionalParams) : base(machine, sweepMs, additionalParams)
+        public Basic01(Machine machine, object cfg) : base(machine, cfg)
         {
             
         }

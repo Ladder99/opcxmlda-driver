@@ -47,11 +47,14 @@ namespace l99.driver.opcxmlda
         public OpcxmldaMachine(Machines machines, bool enabled, string id, object config) : base(machines, enabled, id, config)
         {
             dynamic cfg = (dynamic) config;
-            _opcxmldaEndpoint = new OpcxmldaEndpoint(cfg.uri, (short)cfg.timeout);
-            _client = new EasyDAClient();
+            
             this["cfg"] = cfg;
-            this["data"] = cfg.data;
+            this["data"] = cfg.type["data"];
             this["platform"] = new Platform(this);
+            
+            _opcxmldaEndpoint = new OpcxmldaEndpoint(cfg.type["net_uri"], (short)cfg.type["net_timeout_s"]);
+            
+            _client = new EasyDAClient();
         }
     }
 }

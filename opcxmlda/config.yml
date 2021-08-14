@@ -2,53 +2,12 @@ machines:
   - id: demo
     enabled: !!bool true
     type: l99.driver.opcxmlda.OpcxmldaMachine, opcxmlda
-    strategy_type: l99.driver.opcxmlda.collectors.Basic01, opcxmlda
-    handler_type: l99.driver.opcxmlda.handlers.SHDR, opcxmlda
-    sweep_ms: !!int 1000
-    net_uri: http://opcxml.demo-this.com/XmlDaSampleServer/Service.asmx
-    net_timeout_s: !!int 3
-    data:
-      - Dynamic/Analog Types/Double:
-          shdr:
-            name: analog_double
-            category: sample
-            eval: |
-              --print(JObject.FromObject(dataitems):ToString());
-              
-              if current_value == 'UNAVAILABLE' then
-                print(name .. ' is available')
-                return new_value
-              else
-                print(name .. ' = ' .. current_value .. ' + ' .. new_value)
-                return current_value + new_value
-              end
-      - Dynamic/Analog Types/Int:
-          shdr:
-            name: analog_int
-            category: sample
-            eval: |
-              print('analog_int value: ' .. dataitems["analog_int"].Value);
-              return new_value;
-      - Dynamic/Analog Types/Double[]:
-      - Static/Simple Types/String:
-          shdr:
-            name: simple_string
-            category: message
-            eval: |
-              random_code = math.random(100,999);
-              dataitem.Code = tostring(random_code);
-              return new_value;
-      - Static/Simple Types/DateTime:
-          shdr:
-            name: simple_datetime
-            category: event
-      - Static/ArrayTypes/Object[]:
-      - Dynamic/Analog Types/Fools/Guildenstern:
-      - Dynamic/Enumerated Types/Gems:
-      - SomeUnknownItem:
+    strategy: l99.driver.opcxmlda.collectors.Basic01, opcxmlda
+    handler: l99.driver.opcxmlda.handlers.SHDR, opcxmlda
+    
     broker:
       enabled: !!bool true
-      net_ip: 10.20.30.114
+      net_ip: 10.20.30.102
       net_port: !!int 1883
       auto_connect: !!bool true
       publish_status: !!bool true
@@ -56,9 +15,54 @@ machines:
       publish_changes: !!bool true
       publish_disco: !!bool true
       disco_base_topic: opcxmlda
-      anonymous: !!bool false
+      anonymous: !!bool true
       user: admin
       password: hcf.Lab5
+    
+    l99.driver.opcxmlda.OpcxmldaMachine, opcxmlda:
+      sweep_ms: !!int 1000
+      net_uri: http://opcxml.demo-this.com/XmlDaSampleServer/Service.asmx
+      net_timeout_s: !!int 3
+      data:
+        - Dynamic/Analog Types/Double:
+            shdr:
+              name: analog_double
+              category: sample
+              eval: |
+                --print(JObject.FromObject(dataitems):ToString());
+
+                if current_value == 'UNAVAILABLE' then
+                  print(name .. ' is available')
+                  return new_value
+                else
+                  print(name .. ' = ' .. current_value .. ' + ' .. new_value)
+                  return current_value + new_value
+                end
+        - Dynamic/Analog Types/Int:
+            shdr:
+              name: analog_int
+              category: sample
+              eval: |
+                print('analog_int value: ' .. dataitems["analog_int"].Value);
+                return new_value;
+        - Dynamic/Analog Types/Double[]:
+        - Static/Simple Types/String:
+            shdr:
+              name: simple_string
+              category: message
+              eval: |
+                random_code = math.random(100,999);
+                dataitem.Code = tostring(random_code);
+                return new_value;
+        - Static/Simple Types/DateTime:
+            shdr:
+              name: simple_datetime
+              category: event
+        - Static/ArrayTypes/Object[]:
+        - Dynamic/Analog Types/Fools/Guildenstern:
+        - Dynamic/Enumerated Types/Gems:
+        - SomeUnknownItem:
+    
     l99.driver.opcxmlda.handlers.SHDR, opcxmlda:
       port: !!int 7878
       verbose: !!bool true
