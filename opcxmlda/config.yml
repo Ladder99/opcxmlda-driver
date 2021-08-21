@@ -17,7 +17,7 @@ machines:
       disco_base_topic: opcxmlda
       anonymous: !!bool true
       user: admin
-      password: hcf.Lab5
+      password: password
     
     l99.driver.opcxmlda.OpcxmldaMachine, opcxmlda:
       sweep_ms: !!int 1000
